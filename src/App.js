@@ -10,29 +10,33 @@ function App() {
 
   const buy = async (endpoint, payload, service) => {
     if (wallet < payload.amount) {
-      alert("Insufficient balance");
+      alert("❌ Insufficient wallet balance");
       return;
     }
 
-    const res = await fetch(`${backendURL}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    try {
+      const res = await fetch(`${backendURL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    const data = await res.json();
-    setResponse(data);
+      const data = await res.json();
+      setResponse(data);
 
-    if (data.status) {
-      setWallet(wallet - payload.amount);
-      setTransactions([
-        {
-          service,
-          amount: payload.amount,
-          date: new Date().toLocaleString()
-        },
-        ...transactions
-      ]);
+      if (data.status) {
+        setWallet(prev => prev - payload.amount);
+        setTransactions(prev => [
+          {
+            service,
+            amount: payload.amount,
+            date: new Date().toLocaleString()
+          },
+          ...prev
+        ]);
+      }
+    } catch (err) {
+      alert("Server error");
     }
   };
 
@@ -49,7 +53,7 @@ function App() {
             phone_number: "08012345678",
             amount: 490
           }, "DATA")
-        }>Buy Data</button>
+        }>📡 Buy Data</button>
 
         <button onClick={() =>
           buy("/api/vtu/airtime", {
@@ -58,7 +62,7 @@ function App() {
             phone_number: "08012345678",
             amount: 500
           }, "AIRTIME")
-        }>Buy Airtime</button>
+        }>📞 Buy Airtime</button>
 
         <button onClick={() =>
           buy("/api/vtu/cable", {
@@ -68,7 +72,7 @@ function App() {
             phone: "08012345678",
             amount: 1200
           }, "CABLE")
-        }>Cable TV</button>
+        }>📺 Cable TV</button>
 
         <button onClick={() =>
           buy("/api/vtu/electricity", {
@@ -79,7 +83,7 @@ function App() {
             phone: "08012345678",
             amount: 2000
           }, "ELECTRICITY")
-        }>Electricity</button>
+        }>⚡ Electricity</button>
       </div>
 
       <h2>Transaction History</h2>
