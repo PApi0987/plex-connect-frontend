@@ -1,18 +1,62 @@
 import React, { useState } from "react";
 import "./styles.css";
 
-const backendURL = "https://plex-connect.onrender.com";
+// 🔗 YOUR BACKEND URL (Render)
+const backendURL = "https://plex-connect-backend.onrender.com";
 
 function App() {
   const [wallet, setWallet] = useState(5000);
   const [transactions, setTransactions] = useState([]);
   const [response, setResponse] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  // =========================
+  // 💳 FUND WALLET
+  // =========================
+  const fundWallet = async () => {
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${backendURL}/api/wallet/fund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: 1,
+          amount: 2000
+        })
+      });
+
+      const data = await res.json();
+      setResponse(data);
+
+      if (data.status) {
+        setWallet(data.wallet_balance);
+        setTransactions(prev => [
+          {
+            service: "WALLET FUNDING",
+            amount: 2000,
+            date: new Date().toLocaleString()
+          },
+          ...prev
+        ]);
+      }
+    } catch (err) {
+      alert("Wallet funding failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
+  // 🛒 BUY SERVICES (GENERAL)
+  // =========================
   const buy = async (endpoint, payload, service) => {
     if (wallet < payload.amount) {
       alert("❌ Insufficient wallet balance");
       return;
     }
+
+    setLoading(true);
 
     try {
       const res = await fetch(`${backendURL}${endpoint}`, {
@@ -36,14 +80,23 @@ function App() {
         ]);
       }
     } catch (err) {
-      alert("Server error");
+      alert("Transaction failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container">
-      <h1>Plex Connect VTU</h1>
-      <p className="wallet">Wallet Balance: ₦{wallet}</p>
+      <h1>✨ Plex Connect VTU</h1>
+
+      <div className="card">
+        <h2>Wallet Balance</h2>
+        <p className="wallet">₦{wallet}</p>
+        <button onClick={fundWallet} disabled={loading}>
+          💳 Fund Wallet ₦2000
+        </button>
+      </div>
 
       <div className="grid">
         <button onClick={() =>
@@ -86,20 +139,23 @@ function App() {
         }>⚡ Electricity</button>
       </div>
 
-      <h2>Transaction History</h2>
-      <ul>
-        {transactions.map((t, i) => (
-          <li key={i}>
-            {t.date} — {t.service} — ₦{t.amount}
-          </li>
-        ))}
-      </ul>
+      <div className="card">
+        <h2>Transaction History</h2>
+        {transactions.length === 0 && <p>No transactions yet</p>}
+        <ul>
+          {transactions.map((t, i) => (
+            <li key={i}>
+              {t.date} — <b>{t.service}</b> — ₦{t.amount}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {response && (
-        <>
+        <div className="card">
           <h2>API Response</h2>
           <pre>{JSON.stringify(response, null, 2)}</pre>
-        </>
+        </div>
       )}
     </div>
   );
