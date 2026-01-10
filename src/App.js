@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./styles.css";
 
-// 🔗 FAKE BACKEND URL
-const backendURL = "https://mock-api.plexconnect.fake";
+// 🔗 FAKE BACKEND URL (for now)
+const backendURL = "https://fake-plex-backend.com";
 
 function App() {
   const [wallet, setWallet] = useState(5000);
@@ -10,84 +10,80 @@ function App() {
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
+  const [notifications, setNotifications] = useState([]);
 
   // 💳 FUND WALLET
   const fundWallet = async () => {
     setLoading(true);
-    await new Promise((res) => setTimeout(res, 800));
-
-    const fakeResponse = {
-      status: true,
-      wallet_balance: wallet + 2000,
-      message: "Wallet funded successfully (mock)",
-    };
-
-    setResponse(fakeResponse);
-    setWallet(wallet + 2000);
-    setTransactions(prev => [
-      { service: "WALLET FUNDING", amount: 2000, date: new Date().toLocaleString() },
-      ...prev,
-    ]);
-    setLoading(false);
+    try {
+      // Simulate API call
+      await new Promise(r => setTimeout(r, 1000));
+      const amount = 2000;
+      setWallet(prev => prev + amount);
+      setTransactions(prev => [
+        { service: "WALLET FUNDING", amount, date: new Date().toLocaleString() },
+        ...prev,
+      ]);
+      addNotification(`Wallet funded: ₦${amount}`);
+    } catch (err) {
+      addNotification("Wallet funding failed ❌");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 🛒 BUY SERVICES
-  const buy = async (service, amount) => {
-    if (wallet < amount) return alert("❌ Insufficient wallet balance");
-    setLoading(true);
-    await new Promise((res) => setTimeout(res, 800));
-
-    const fakeResponse = {
-      status: true,
-      wallet_balance: wallet - amount,
-      message: `${service} purchased successfully (mock)`,
-    };
-
-    setResponse(fakeResponse);
-    setWallet(wallet - amount);
+  // 🔄 GENERIC BUY SERVICE
+  const buy = (service, amount) => {
+    if (wallet < amount) {
+      addNotification("❌ Insufficient wallet balance");
+      return;
+    }
+    setWallet(prev => prev - amount);
     setTransactions(prev => [
       { service, amount, date: new Date().toLocaleString() },
       ...prev,
     ]);
-    setLoading(false);
+    addNotification(`Purchased ${service}: ₦${amount}`);
   };
 
-  // 🌗 TOGGLE DARK/LIGHT MODE
-  const toggleTheme = () => setDarkMode(!darkMode);
+  // 🔔 Add notification
+  const addNotification = (msg) => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, msg }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 4000); // auto remove after 4s
+  };
 
   return (
-    <div className={darkMode ? "app dark-mode" : "app light-mode"}>
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <h2>Plex Connect</h2>
+    <div className={`app ${darkMode ? "dark-mode" : "light-mode"}`}>
+      {/* Notifications */}
+      <div className="notifications">
+        {notifications.map(n => (
+          <div key={n.id} className="notification">{n.msg}</div>
+        ))}
+      </div>
+
+      {/* Sidebar */}
+      <div className="sidebar">
+        <h2>Plex</h2>
         <nav>
           <button>Dashboard</button>
           <button>Transactions</button>
           <button>Profile</button>
-          <button onClick={toggleTheme}>
-            {darkMode ? "🌞 Light Mode" : "🌙 Dark Mode"}
+          <button onClick={() => setDarkMode(prev => !prev)}>
+            {darkMode ? "Light Mode" : "Dark Mode"}
           </button>
         </nav>
-      </aside>
+      </div>
 
-      {/* MAIN DASHBOARD */}
-      <main className="main-content">
+      {/* Main */}
+      <div className="main-content">
         <header>
-          <h1>Welcome!</h1>
-          <div className="settings">
-            <button onClick={() => setShowSettings(!showSettings)}>⋮</button>
-            {showSettings && (
-              <div className="settings-menu">
-                <button onClick={toggleTheme}>Toggle Theme</button>
-                <button onClick={() => alert("Profile settings (mock)")} >Profile</button>
-                <button onClick={() => alert("Logged out (mock)")} >Logout</button>
-              </div>
-            )}
-          </div>
+          <h1>✨ Plex Connect VTU</h1>
         </header>
 
-        {/* WALLET CARD */}
+        {/* Wallet */}
         <div className="card wallet-card">
           <h2>Wallet Balance</h2>
           <p className="wallet">₦{wallet}</p>
@@ -96,38 +92,38 @@ function App() {
           </button>
         </div>
 
-        {/* QUICK ACTIONS */}
+        {/* Quick actions */}
         <div className="grid">
-          <button onClick={() => buy("DATA", 490)}>📡 Buy Data ₦490</button>
-          <button onClick={() => buy("AIRTIME", 500)}>📞 Buy Airtime ₦500</button>
-          <button onClick={() => buy("CABLE", 1200)}>📺 Cable TV ₦1200</button>
-          <button onClick={() => buy("ELECTRICITY", 2000)}>⚡ Electricity ₦2000</button>
+          <button onClick={() => buy("DATA", 490)}>📡 Buy Data</button>
+          <button onClick={() => buy("AIRTIME", 500)}>📞 Buy Airtime</button>
+          <button onClick={() => buy("CABLE", 1200)}>📺 Cable TV</button>
+          <button onClick={() => buy("ELECTRICITY", 2000)}>⚡ Electricity</button>
         </div>
 
-        {/* TRANSACTION HISTORY */}
+        {/* Transaction history */}
         <div className="card">
           <h2>Transaction History</h2>
-          {transactions.length === 0 ? (
-            <p>No transactions yet</p>
-          ) : (
-            <ul>
-              {transactions.map((t, i) => (
-                <li key={i}>
-                  {t.date} — <b>{t.service}</b> — ₦{t.amount}
-                </li>
-              ))}
-            </ul>
-          )}
+          {transactions.length === 0 && <p>No transactions yet</p>}
+          <ul>
+            {transactions.map((t, i) => (
+              <li key={i}>
+                {t.date} — <b>{t.service}</b> — ₦{t.amount}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {/* API RESPONSE */}
+        {/* API Response */}
         {response && (
           <div className="card">
             <h2>API Response</h2>
             <pre>{JSON.stringify(response, null, 2)}</pre>
           </div>
         )}
-      </main>
+
+        {/* Floating Action Button */}
+        <button className="fab" onClick={fundWallet}>💰 Quick Top-up</button>
+      </div>
     </div>
   );
 }
