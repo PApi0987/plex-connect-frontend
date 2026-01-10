@@ -1,17 +1,33 @@
 import { createContext, useContext, useState } from "react";
+import { ThemeProvider } from "styled-components";
 
 const ThemeContext = createContext();
 
-export const ThemeProvider = ({ children }) => {
-  const [themeMode, setThemeMode] = useState("light");
+const lightTheme = {
+  background: "#FFFFFF",
+  primary: "#F5F5F5",
+  accent: "#003366",
+  text: "#333333",
+  buttonText: "#FFFFFF",
+};
 
-  const toggleTheme = () => {
-    setThemeMode(prev => (prev === "light" ? "dark" : "light"));
-  };
+const darkTheme = {
+  background: "#000000",
+  primary: "#003366",
+  accent: "#555555",
+  text: "#FFFFFF",
+  buttonText: "#FFFFFF",
+};
+
+export const ThemeProviderWrapper = ({ children }) => {
+  const [isDark, setIsDark] = useState(true);
+  const toggleTheme = () => setIsDark(!isDark);
 
   return (
-    <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
-      {children}
+    <ThemeContext.Provider value={{ toggleTheme, isDark }}>
+      <ThemeProvider theme={isDark ? darkTheme : lightTheme}>
+        {children}
+      </ThemeProvider>
     </ThemeContext.Provider>
   );
 };
