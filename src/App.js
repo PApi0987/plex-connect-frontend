@@ -1,38 +1,36 @@
 import React, { useState } from "react";
 import "./styles.css";
 
-// 🔗 FAKE BACKEND URL (for now)
 const backendURL = "https://fake-plex-backend.com";
 
 function App() {
+  // Wallet & Transactions
   const [wallet, setWallet] = useState(5000);
   const [transactions, setTransactions] = useState([]);
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(false);
+
+  // UI States
   const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState([]);
+  const [modal, setModal] = useState(null); // "login" | "signup" | "settings"
 
-  // 💳 FUND WALLET
-  const fundWallet = async () => {
-    setLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(r => setTimeout(r, 1000));
-      const amount = 2000;
-      setWallet(prev => prev + amount);
-      setTransactions(prev => [
-        { service: "WALLET FUNDING", amount, date: new Date().toLocaleString() },
-        ...prev,
-      ]);
-      addNotification(`Wallet funded: ₦${amount}`);
-    } catch (err) {
-      addNotification("Wallet funding failed ❌");
-    } finally {
-      setLoading(false);
-    }
+  // Auth state
+  const [user, setUser] = useState(null);
+  const [authData, setAuthData] = useState({ email: "", password: "", name: "" });
+
+  // 🔔 Notifications
+  const addNotification = (msg) => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, msg }]);
+    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 4000);
   };
 
-  // 🔄 GENERIC BUY SERVICE
+  // 💳 FUND WALLET
+  const fundWallet = (amount = 2000) => {
+    setWallet(prev => prev + amount);
+    addNotification(`Wallet funded: ₦${amount}`);
+  };
+
+  // 🔄 BUY SERVICE
   const buy = (service, amount) => {
     if (wallet < amount) {
       addNotification("❌ Insufficient wallet balance");
@@ -46,84 +44,158 @@ function App() {
     addNotification(`Purchased ${service}: ₦${amount}`);
   };
 
-  // 🔔 Add notification
-  const addNotification = (msg) => {
-    const id = Date.now();
-    setNotifications(prev => [...prev, { id, msg }]);
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 4000); // auto remove after 4s
+  // 🔑 LOGIN / SIGNUP MOCK
+  const handleAuth = (type) => {
+    if (type === "login") {
+      if (!authData.email || !authData.password) return addNotification("Fill all fields");
+      setUser({ name: "John Doe", email: authData.email });
+      addNotification("✅ Logged in successfully");
+    } else if (type === "signup") {
+      if (!authData.name || !authData.email || !authData.password) return addNotification("Fill all fields");
+      setUser({ name: authData.name, email: authData.email });
+      addNotification("✅ Account created successfully");
+    }
+    setModal(null);
+    setAuthData({ name: "", email: "", password: "" });
+  };
+
+  // 🔓 LOGOUT
+  const logout = () => {
+    setUser(null);
+    addNotification("Logged out");
   };
 
   return (
     <div className={`app ${darkMode ? "dark-mode" : "light-mode"}`}>
       {/* Notifications */}
       <div className="notifications">
-        {notifications.map(n => (
-          <div key={n.id} className="notification">{n.msg}</div>
-        ))}
+        {notifications.map(n => <div key={n.id} className="notification">{n.msg}</div>)}
       </div>
 
       {/* Sidebar */}
       <div className="sidebar">
         <h2>Plex</h2>
         <nav>
-          <button>Dashboard</button>
-          <button>Transactions</button>
-          <button>Profile</button>
+          <button onClick={() => setModal("settings")}>⋮ Settings</button>
           <button onClick={() => setDarkMode(prev => !prev)}>
             {darkMode ? "Light Mode" : "Dark Mode"}
           </button>
+          {user ? (
+            <button onClick={logout}>Logout</button>
+          ) : (
+            <>
+              <button onClick={() => setModal("login")}>Login</button>
+              <button onClick={() => setModal("signup")}>Sign Up</button>
+            </>
+          )}
         </nav>
       </div>
 
-      {/* Main */}
+      {/* Main Content */}
       <div className="main-content">
         <header>
           <h1>✨ Plex Connect VTU</h1>
         </header>
 
-        {/* Wallet */}
-        <div className="card wallet-card">
-          <h2>Wallet Balance</h2>
-          <p className="wallet">₦{wallet}</p>
-          <button onClick={fundWallet} disabled={loading}>
-            {loading ? "⏳ Processing..." : "💳 Fund Wallet ₦2000"}
-          </button>
-        </div>
+        {user && (
+          <>
+            {/* Wallet */}
+            <div className="card wallet-card">
+              <h2>Wallet Balance</h2>
+              <p className="wallet">₦{wallet}</p>
+              <button onClick={() => fundWallet()}>💳 Fund Wallet ₦2000</button>
+            </div>
 
-        {/* Quick actions */}
-        <div className="grid">
-          <button onClick={() => buy("DATA", 490)}>📡 Buy Data</button>
-          <button onClick={() => buy("AIRTIME", 500)}>📞 Buy Airtime</button>
-          <button onClick={() => buy("CABLE", 1200)}>📺 Cable TV</button>
-          <button onClick={() => buy("ELECTRICITY", 2000)}>⚡ Electricity</button>
-        </div>
+            {/* Quick actions */}
+            <div className="grid">
+              <button onClick={() => buy("DATA", 490)}>📡 Buy Data</button>
+              <button onClick={() => buy("AIRTIME", 500)}>📞 Buy Airtime</button>
+              <button onClick={() => buy("CABLE", 1200)}>📺 Cable TV</button>
+              <button onClick={() => buy("ELECTRICITY", 2000)}>⚡ Electricity</button>
+            </div>
 
-        {/* Transaction history */}
-        <div className="card">
-          <h2>Transaction History</h2>
-          {transactions.length === 0 && <p>No transactions yet</p>}
-          <ul>
-            {transactions.map((t, i) => (
-              <li key={i}>
-                {t.date} — <b>{t.service}</b> — ₦{t.amount}
-              </li>
-            ))}
-          </ul>
-        </div>
+            {/* Transaction history */}
+            <div className="card">
+              <h2>Transaction History</h2>
+              {transactions.length === 0 && <p>No transactions yet</p>}
+              <ul>
+                {transactions.map((t, i) => (
+                  <li key={i}>
+                    {t.date} — <b>{t.service}</b> — ₦{t.amount}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
 
-        {/* API Response */}
-        {response && (
+        {!user && (
           <div className="card">
-            <h2>API Response</h2>
-            <pre>{JSON.stringify(response, null, 2)}</pre>
+            <h2>Welcome to Plex Connect</h2>
+            <p>Please login or sign up to continue.</p>
           </div>
         )}
 
         {/* Floating Action Button */}
-        <button className="fab" onClick={fundWallet}>💰 Quick Top-up</button>
+        {user && <button className="fab" onClick={() => fundWallet()}>💰 Top-up</button>}
       </div>
+
+      {/* Modals */}
+      {modal && (
+        <div className="modal-backdrop" onClick={() => setModal(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            {modal === "login" && (
+              <>
+                <h2>Login</h2>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={authData.email}
+                  onChange={e => setAuthData({...authData, email: e.target.value})}
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={authData.password}
+                  onChange={e => setAuthData({...authData, password: e.target.value})}
+                />
+                <button onClick={() => handleAuth("login")}>Login</button>
+              </>
+            )}
+            {modal === "signup" && (
+              <>
+                <h2>Sign Up</h2>
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={authData.name}
+                  onChange={e => setAuthData({...authData, name: e.target.value})}
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={authData.email}
+                  onChange={e => setAuthData({...authData, email: e.target.value})}
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={authData.password}
+                  onChange={e => setAuthData({...authData, password: e.target.value})}
+                />
+                <button onClick={() => handleAuth("signup")}>Sign Up</button>
+              </>
+            )}
+            {modal === "settings" && (
+              <>
+                <h2>Settings</h2>
+                <button onClick={logout}>Logout</button>
+                <button onClick={() => setModal(null)}>Close</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
