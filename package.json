@@ -1,15 +1,15 @@
 {
   "name": "plex-connect-frontend",
   "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.12.1",
-    "styled-components": "^6.0.7"
-  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "react-scripts": "^5.0.1"
   }
 }
