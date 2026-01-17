@@ -1,20 +1,27 @@
+// src/App.js
 import React, { useState } from "react";
 import "./styles.css";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProviderWrapper, useTheme } from "./contexts/ThemeContext";
 
-const backendURL = "https://fake-plex-backend.com";
+import Sidebar from "./components/Sidebar";
+import FAB from "./components/FAB";
+import Modal from "./components/Modal";
+import SettingsMenu from "./components/SettingsMenu";
 
-function App() {
+function AppContent() {
+  const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
+
   // Wallet & Transactions
   const [wallet, setWallet] = useState(5000);
   const [transactions, setTransactions] = useState([]);
 
   // UI States
-  const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [modal, setModal] = useState(null); // "login" | "signup" | "settings"
 
-  // Auth state
-  const [user, setUser] = useState(null);
+  // Auth data for login/signup
   const [authData, setAuthData] = useState({ email: "", password: "", name: "" });
 
   // 🔔 Notifications
@@ -44,52 +51,31 @@ function App() {
     addNotification(`Purchased ${service}: ₦${amount}`);
   };
 
-  // 🔑 LOGIN / SIGNUP MOCK
+  // 🔑 LOGIN / SIGNUP
   const handleAuth = (type) => {
     if (type === "login") {
       if (!authData.email || !authData.password) return addNotification("Fill all fields");
-      setUser({ name: "John Doe", email: authData.email });
       addNotification("✅ Logged in successfully");
     } else if (type === "signup") {
       if (!authData.name || !authData.email || !authData.password) return addNotification("Fill all fields");
-      setUser({ name: authData.name, email: authData.email });
       addNotification("✅ Account created successfully");
     }
     setModal(null);
-    setAuthData({ name: "", email: "", password: "" });
-  };
-
-  // 🔓 LOGOUT
-  const logout = () => {
-    setUser(null);
-    addNotification("Logged out");
+    setAuthData({ email: "", password: "", name: "" });
   };
 
   return (
-    <div className={`app ${darkMode ? "dark-mode" : "light-mode"}`}>
+    <div className={`app ${isDark ? "dark-mode" : "light-mode"}`}>
       {/* Notifications */}
       <div className="notifications">
         {notifications.map(n => <div key={n.id} className="notification">{n.msg}</div>)}
       </div>
 
       {/* Sidebar */}
-      <div className="sidebar">
-        <h2>Plex</h2>
-        <nav>
-          <button onClick={() => setModal("settings")}>⋮ Settings</button>
-          <button onClick={() => setDarkMode(prev => !prev)}>
-            {darkMode ? "Light Mode" : "Dark Mode"}
-          </button>
-          {user ? (
-            <button onClick={logout}>Logout</button>
-          ) : (
-            <>
-              <button onClick={() => setModal("login")}>Login</button>
-              <button onClick={() => setModal("signup")}>Sign Up</button>
-            </>
-          )}
-        </nav>
-      </div>
+      <Sidebar
+        onSettings={() => setModal("settings")}
+        onToggleTheme={toggleTheme}
+      />
 
       {/* Main Content */}
       <div className="main-content">
@@ -97,7 +83,7 @@ function App() {
           <h1>✨ Plex Connect VTU</h1>
         </header>
 
-        {user && (
+        {user ? (
           <>
             {/* Wallet */}
             <div className="card wallet-card">
@@ -120,16 +106,12 @@ function App() {
               {transactions.length === 0 && <p>No transactions yet</p>}
               <ul>
                 {transactions.map((t, i) => (
-                  <li key={i}>
-                    {t.date} — <b>{t.service}</b> — ₦{t.amount}
-                  </li>
+                  <li key={i}>{t.date} — <b>{t.service}</b> — ₦{t.amount}</li>
                 ))}
               </ul>
             </div>
           </>
-        )}
-
-        {!user && (
+        ) : (
           <div className="card">
             <h2>Welcome to Plex Connect</h2>
             <p>Please login or sign up to continue.</p>
@@ -137,67 +119,74 @@ function App() {
         )}
 
         {/* Floating Action Button */}
-        {user && <button className="fab" onClick={() => fundWallet()}>💰 Top-up</button>}
+        {user && <FAB onClick={() => fundWallet()} />}
       </div>
 
       {/* Modals */}
       {modal && (
-        <div className="modal-backdrop" onClick={() => setModal(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            {modal === "login" && (
-              <>
-                <h2>Login</h2>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={authData.email}
-                  onChange={e => setAuthData({...authData, email: e.target.value})}
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={authData.password}
-                  onChange={e => setAuthData({...authData, password: e.target.value})}
-                />
-                <button onClick={() => handleAuth("login")}>Login</button>
-              </>
-            )}
-            {modal === "signup" && (
-              <>
-                <h2>Sign Up</h2>
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  value={authData.name}
-                  onChange={e => setAuthData({...authData, name: e.target.value})}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={authData.email}
-                  onChange={e => setAuthData({...authData, email: e.target.value})}
-                />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={authData.password}
-                  onChange={e => setAuthData({...authData, password: e.target.value})}
-                />
-                <button onClick={() => handleAuth("signup")}>Sign Up</button>
-              </>
-            )}
-            {modal === "settings" && (
-              <>
-                <h2>Settings</h2>
-                <button onClick={logout}>Logout</button>
-                <button onClick={() => setModal(null)}>Close</button>
-              </>
-            )}
-          </div>
-        </div>
+        <Modal open={!!modal} onClose={() => setModal(null)}>
+          {modal === "login" && (
+            <>
+              <h2>Login</h2>
+              <input
+                type="email"
+                placeholder="Email"
+                value={authData.email}
+                onChange={e => setAuthData({...authData, email: e.target.value})}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={authData.password}
+                onChange={e => setAuthData({...authData, password: e.target.value})}
+              />
+              <button onClick={() => handleAuth("login")}>Login</button>
+            </>
+          )}
+          {modal === "signup" && (
+            <>
+              <h2>Sign Up</h2>
+              <input
+                type="text"
+                placeholder="Full Name"
+                value={authData.name}
+                onChange={e => setAuthData({...authData, name: e.target.value})}
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                value={authData.email}
+                onChange={e => setAuthData({...authData, email: e.target.value})}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={authData.password}
+                onChange={e => setAuthData({...authData, password: e.target.value})}
+              />
+              <button onClick={() => handleAuth("signup")}>Sign Up</button>
+            </>
+          )}
+          {modal === "settings" && (
+            <>
+              <h2>Settings</h2>
+              <SettingsMenu logout={logout} />
+              <button onClick={() => setModal(null)}>Close</button>
+            </>
+          )}
+        </Modal>
       )}
     </div>
   );
 }
 
-export default App;
+// Wrap App with AuthProvider and ThemeProviderWrapper
+export default function App() {
+  return (
+    <AuthProvider>
+      <ThemeProviderWrapper>
+        <AppContent />
+      </ThemeProviderWrapper>
+    </AuthProvider>
+  );
+          }
