@@ -1,30 +1,33 @@
-import { createContext, useContext, useState } from "react";
+// src/contexts/ThemeContext.js
+import React, { createContext, useContext, useState } from "react";
 import { ThemeProvider } from "styled-components";
 
 const ThemeContext = createContext();
 
+// Define light and dark themes
 const lightTheme = {
-  background: "#FFFFFF",
-  primary: "#F5F5F5",
+  background: "#f5f5f5",
+  primary: "#ffffff",
   accent: "#003366",
   text: "#333333",
-  buttonText: "#FFFFFF"
+  buttonText: "#ffffff",
 };
 
 const darkTheme = {
-  background: "#000000",
-  primary: "#003366",
-  accent: "#555555",
-  text: "#FFFFFF",
-  buttonText: "#FFFFFF"
+  background: "#121212",
+  primary: "#1f1f1f",
+  accent: "#0d6efd",
+  text: "#ffffff",
+  buttonText: "#ffffff",
 };
 
 export const ThemeProviderWrapper = ({ children }) => {
   const [isDark, setIsDark] = useState(true);
-  const toggleTheme = () => setIsDark(!isDark);
+
+  const toggleTheme = () => setIsDark(prev => !prev);
 
   return (
-    <ThemeContext.Provider value={{ toggleTheme, isDark }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
       <ThemeProvider theme={isDark ? darkTheme : lightTheme}>
         {children}
       </ThemeProvider>
