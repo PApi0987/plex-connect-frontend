@@ -1,4 +1,3 @@
-// src/App.js
 import React, { useState } from "react";
 import "./styles.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -10,72 +9,52 @@ import Modal from "./components/Modal";
 import SettingsMenu from "./components/SettingsMenu";
 
 function AppContent() {
-  const { user, logout } = useAuth();
+  const {
+    user,
+    wallet,
+    transactions,
+    notifications,
+    addNotification,
+    fundWallet,
+    buyService,
+    login,
+    signup,
+    logout
+  } = useAuth();
+
   const { isDark, toggleTheme } = useTheme();
 
-  // Wallet & Transactions
-  const [wallet, setWallet] = useState(5000);
-  const [transactions, setTransactions] = useState([]);
-
-  // UI States
-  const [notifications, setNotifications] = useState([]);
+  // Modal state
   const [modal, setModal] = useState(null); // "login" | "signup" | "settings"
+  const [authData, setAuthData] = useState({ name: "", email: "", password: "" });
 
-  // Auth data for login/signup
-  const [authData, setAuthData] = useState({ email: "", password: "", name: "" });
-
-  // 🔔 Notifications
-  const addNotification = (msg) => {
-    const id = Date.now();
-    setNotifications(prev => [...prev, { id, msg }]);
-    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 4000);
-  };
-
-  // 💳 FUND WALLET
-  const fundWallet = (amount = 2000) => {
-    setWallet(prev => prev + amount);
-    addNotification(`Wallet funded: ₦${amount}`);
-  };
-
-  // 🔄 BUY SERVICE
-  const buy = (service, amount) => {
-    if (wallet < amount) {
-      addNotification("❌ Insufficient wallet balance");
-      return;
-    }
-    setWallet(prev => prev - amount);
-    setTransactions(prev => [
-      { service, amount, date: new Date().toLocaleString() },
-      ...prev,
-    ]);
-    addNotification(`Purchased ${service}: ₦${amount}`);
-  };
-
-  // 🔑 LOGIN / SIGNUP
+  // Handle login/signup
   const handleAuth = (type) => {
+    const { name, email, password } = authData;
+
     if (type === "login") {
-      if (!authData.email || !authData.password) return addNotification("Fill all fields");
-      addNotification("✅ Logged in successfully");
+      if (!email || !password) return addNotification("Fill all fields");
+      login("John Doe", email); // Mock login
     } else if (type === "signup") {
-      if (!authData.name || !authData.email || !authData.password) return addNotification("Fill all fields");
-      addNotification("✅ Account created successfully");
+      if (!name || !email || !password) return addNotification("Fill all fields");
+      signup(name, email); // Mock signup
     }
+
     setModal(null);
-    setAuthData({ email: "", password: "", name: "" });
+    setAuthData({ name: "", email: "", password: "" });
   };
 
   return (
     <div className={`app ${isDark ? "dark-mode" : "light-mode"}`}>
       {/* Notifications */}
       <div className="notifications">
-        {notifications.map(n => <div key={n.id} className="notification">{n.msg}</div>)}
+        {notifications.map(n => (
+          <div key={n.id} className="notification">{n.msg}</div>
+        ))}
       </div>
 
       {/* Sidebar */}
-      <Sidebar
-        onSettings={() => setModal("settings")}
-        onToggleTheme={toggleTheme}
-      />
+      <Sidebar onSettings={() => setModal("settings")} onToggleTheme={toggleTheme} />
 
       {/* Main Content */}
       <div className="main-content">
@@ -94,10 +73,10 @@ function AppContent() {
 
             {/* Quick actions */}
             <div className="grid">
-              <button onClick={() => buy("DATA", 490)}>📡 Buy Data</button>
-              <button onClick={() => buy("AIRTIME", 500)}>📞 Buy Airtime</button>
-              <button onClick={() => buy("CABLE", 1200)}>📺 Cable TV</button>
-              <button onClick={() => buy("ELECTRICITY", 2000)}>⚡ Electricity</button>
+              <button onClick={() => buyService("DATA", 490)}>📡 Buy Data</button>
+              <button onClick={() => buyService("AIRTIME", 500)}>📞 Buy Airtime</button>
+              <button onClick={() => buyService("CABLE", 1200)}>📺 Cable TV</button>
+              <button onClick={() => buyService("ELECTRICITY", 2000)}>⚡ Electricity</button>
             </div>
 
             {/* Transaction history */}
@@ -132,17 +111,18 @@ function AppContent() {
                 type="email"
                 placeholder="Email"
                 value={authData.email}
-                onChange={e => setAuthData({...authData, email: e.target.value})}
+                onChange={e => setAuthData({ ...authData, email: e.target.value })}
               />
               <input
                 type="password"
                 placeholder="Password"
                 value={authData.password}
-                onChange={e => setAuthData({...authData, password: e.target.value})}
+                onChange={e => setAuthData({ ...authData, password: e.target.value })}
               />
               <button onClick={() => handleAuth("login")}>Login</button>
             </>
           )}
+
           {modal === "signup" && (
             <>
               <h2>Sign Up</h2>
@@ -150,23 +130,24 @@ function AppContent() {
                 type="text"
                 placeholder="Full Name"
                 value={authData.name}
-                onChange={e => setAuthData({...authData, name: e.target.value})}
+                onChange={e => setAuthData({ ...authData, name: e.target.value })}
               />
               <input
                 type="email"
                 placeholder="Email"
                 value={authData.email}
-                onChange={e => setAuthData({...authData, email: e.target.value})}
+                onChange={e => setAuthData({ ...authData, email: e.target.value })}
               />
               <input
                 type="password"
                 placeholder="Password"
                 value={authData.password}
-                onChange={e => setAuthData({...authData, password: e.target.value})}
+                onChange={e => setAuthData({ ...authData, password: e.target.value })}
               />
               <button onClick={() => handleAuth("signup")}>Sign Up</button>
             </>
           )}
+
           {modal === "settings" && (
             <>
               <h2>Settings</h2>
@@ -180,7 +161,7 @@ function AppContent() {
   );
 }
 
-// Wrap App with AuthProvider and ThemeProviderWrapper
+// Wrap AppContent with AuthProvider and ThemeProviderWrapper
 export default function App() {
   return (
     <AuthProvider>
@@ -189,4 +170,4 @@ export default function App() {
       </ThemeProviderWrapper>
     </AuthProvider>
   );
-          }
+                }
