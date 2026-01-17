@@ -1,3 +1,4 @@
+import React from "react";
 import styled from "styled-components";
 import Sidebar from "../components/Sidebar";
 import { useAuth } from "../contexts/AuthContext";
@@ -14,6 +15,13 @@ const Content = styled.div`
   padding: 20px;
 `;
 
+const Card = styled.div`
+  background: ${({ theme }) => theme.primary};
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+`;
+
 export default function ProfilePage() {
   const { user } = useAuth();
 
@@ -22,10 +30,12 @@ export default function ProfilePage() {
       <Sidebar />
       <Content>
         <h1>Profile</h1>
-        <p>Name: {user.name}</p>
-        <p>Email: example@email.com</p>
-        <p>Phone: 08012345678</p>
+        <Card>
+          <p><b>Name:</b> {user.name}</p>
+          <p><b>Email:</b> {user.email}</p>
+          <p><b>Phone:</b> 08012345678</p>
+        </Card>
       </Content>
     </Container>
   );
-    }
+}
