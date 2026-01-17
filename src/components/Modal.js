@@ -1,30 +1,35 @@
+// src/components/Modal.js
 import React from "react";
 import styled from "styled-components";
 
 const Backdrop = styled.div`
   position: fixed;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.5);
-  display: ${({ open }) => (open ? "flex" : "none")};
+  display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 1000;
 `;
 
-const ModalBox = styled.div`
+const ModalContent = styled.div`
   background: ${({ theme }) => theme.primary};
   color: ${({ theme }) => theme.text};
-  padding: 20px;
+  padding: 30px;
   border-radius: 12px;
-  min-width: 300px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 0 15px ${({ theme }) => theme.accent};
 `;
 
 export default function Modal({ open, onClose, children }) {
+  if (!open) return null;
+
   return (
-    <Backdrop open={open} onClick={onClose}>
-      <ModalBox onClick={e => e.stopPropagation()}>
+    <Backdrop onClick={onClose}>
+      <ModalContent onClick={e => e.stopPropagation()}>
         {children}
-      </ModalBox>
+      </ModalContent>
     </Backdrop>
   );
-    }
+}
