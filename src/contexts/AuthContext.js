@@ -1,46 +1,25 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useState, useContext } from "react";
 
-// Create the AuthContext
 const AuthContext = createContext();
 
-// AuthProvider will wrap your app in index.js
 export const AuthProvider = ({ children }) => {
-  // ----- User & Auth -----
   const [user, setUser] = useState(null);
 
-  // ----- Wallet & Transactions -----
+  // Wallet & transactions
   const [wallet, setWallet] = useState(5000);
   const [transactions, setTransactions] = useState([]);
 
-  // ----- Notifications -----
+  // Notifications
   const [notifications, setNotifications] = useState([]);
 
-  // 🔔 Add a notification
+  // 🔔 Add notification
   const addNotification = (msg) => {
-    const id = Date.now(); // unique id
+    const id = Date.now();
     setNotifications(prev => [...prev, { id, msg }]);
     setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 4000);
   };
 
-  // 🔑 Login
-  const login = (email, name = "John Doe") => {
-    setUser({ email, name });
-    addNotification("✅ Logged in successfully");
-  };
-
-  // 🔑 Signup
-  const signup = (email, name) => {
-    setUser({ email, name });
-    addNotification("✅ Account created successfully");
-  };
-
-  // 🔓 Logout
-  const logout = () => {
-    setUser(null);
-    addNotification("Logged out");
-  };
-
-  // 💳 Fund Wallet
+  // 💳 Fund wallet
   const fundWallet = (amount = 2000) => {
     setWallet(prev => prev + amount);
     addNotification(`Wallet funded: ₦${amount}`);
@@ -52,7 +31,6 @@ export const AuthProvider = ({ children }) => {
       addNotification("❌ Insufficient wallet balance");
       return false;
     }
-
     setWallet(prev => prev - amount);
     setTransactions(prev => [
       { service, amount, date: new Date().toLocaleString() },
@@ -62,26 +40,38 @@ export const AuthProvider = ({ children }) => {
     return true;
   };
 
-  // Provide all state & functions to children
+  // 🔑 Auth functions
+  const login = (name, email) => {
+    setUser({ name, email });
+    addNotification("✅ Logged in successfully");
+  };
+
+  const signup = (name, email) => {
+    setUser({ name, email });
+    addNotification("✅ Account created successfully");
+  };
+
+  const logout = () => {
+    setUser(null);
+    addNotification("Logged out");
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        signup,
-        logout,
-        wallet,
-        fundWallet,
-        transactions,
-        buyService,
-        notifications,
-        addNotification,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      wallet,
+      transactions,
+      notifications,
+      addNotification,
+      fundWallet,
+      buyService,
+      login,
+      signup,
+      logout
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook for consuming AuthContext
 export const useAuth = () => useContext(AuthContext);
