@@ -13,13 +13,9 @@ const Button = styled.button`
   height: 60px;
   font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-  transition: transform 0.2s;
-  &:hover {
-    transform: scale(1.1);
-  }
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 `;
 
-export default function FAB({ onClick, children = "💰" }) {
-  return <Button onClick={onClick}>{children}</Button>;
+export default function FAB({ onClick }) {
+  return <Button onClick={onClick}>💰</Button>;
 }
