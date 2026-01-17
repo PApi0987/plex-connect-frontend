@@ -1,37 +1,34 @@
+import React from "react";
 import styled from "styled-components";
-import { NavLink } from "react-router-dom";
 
 const SidebarContainer = styled.div`
   width: 220px;
   background: ${({ theme }) => theme.primary};
-  min-height: 100vh;
+  color: ${({ theme }) => theme.text};
   padding: 20px;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: 768px) {
-    width: 60px;
-  }
 `;
 
-const LinkItem = styled(NavLink)`
+const NavButton = styled.button`
+  background: none;
+  border: none;
   color: ${({ theme }) => theme.text};
-  text-decoration: none;
-  margin: 15px 0;
-  display: block;
-  &.active {
-    font-weight: bold;
+  text-align: left;
+  margin: 10px 0;
+  cursor: pointer;
+  font-size: 16px;
+
+  &:hover {
     color: ${({ theme }) => theme.accent};
   }
 `;
 
-export default function Sidebar() {
+export default function Sidebar({ onSettingsClick }) {
   return (
     <SidebarContainer>
-      <h3>Menu</h3>
-      <LinkItem to="/dashboard">Dashboard</LinkItem>
-      <LinkItem to="/profile">Profile</LinkItem>
-      <LinkItem to="/settings">Settings</LinkItem>
+      <h2>Plex</h2>
+      <NavButton onClick={onSettingsClick}>⋮ Settings</NavButton>
     </SidebarContainer>
   );
 }
