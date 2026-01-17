@@ -1,12 +1,12 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
-import { useAuth } from "../AuthContext";
-import { useTheme } from "../ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 
-import SettingsMenu from "../components/SettingsMenu";
+import Sidebar from "../components/Sidebar";
 import FAB from "../components/FAB";
 import Modal from "../components/Modal";
-import Sidebar from "../components/Sidebar";
+import SettingsMenu from "../components/SettingsMenu";
 
 const Container = styled.div`
   display: flex;
@@ -20,7 +20,7 @@ const Content = styled.div`
   padding: 20px;
 `;
 
-const WalletCard = styled.div`
+const Card = styled.div`
   background: ${({ theme }) => theme.primary};
   padding: 20px;
   border-radius: 12px;
@@ -34,54 +34,122 @@ const Button = styled.button`
   border-radius: 6px;
   cursor: pointer;
   margin-right: 10px;
+  border: none;
+  font-weight: bold;
 `;
 
 export default function DashboardPage() {
-  const { logout, user } = useAuth();
+  const { user, logout } = useAuth();
   const { toggleTheme } = useTheme();
-  const [modalOpen, setModalOpen] = useState(false);
 
-  const handleTopUp = () => setModalOpen(true);
+  const [wallet, setWallet] = useState(5000);
+  const [transactions, setTransactions] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [modal, setModal] = useState(null); // "topup" | "settings"
+
+  // Notification helper
+  const addNotification = (msg) => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, msg }]);
+    setTimeout(() => setNotifications((prev) => prev.filter((n) => n.id !== id)), 4000);
+  };
+
+  // Wallet top-up
+  const fundWallet = (amount = 2000) => {
+    setWallet((prev) => prev + amount);
+    addNotification(`Wallet funded: ₦${amount}`);
+  };
+
+  // Buy service
+  const buyService = (service, amount) => {
+    if (wallet < amount) {
+      addNotification("❌ Insufficient wallet balance");
+      return;
+    }
+    setWallet((prev) => prev - amount);
+    setTransactions((prev) => [
+      { service, amount, date: new Date().toLocaleString() },
+      ...prev,
+    ]);
+    addNotification(`Purchased ${service}: ₦${amount}`);
+  };
 
   return (
     <Container>
       <Sidebar />
+
       <Content>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1>Welcome, {user.name}</h1>
           <SettingsMenu logout={logout} />
         </div>
 
         <Button onClick={toggleTheme}>Toggle Theme</Button>
 
-        <WalletCard>
+        <Card>
           <h2>Wallet Balance</h2>
-          <p>₦5,000</p>
-        </WalletCard>
+          <p>₦{wallet}</p>
+          <Button onClick={() => fundWallet()}>💳 Fund Wallet ₦2000</Button>
+        </Card>
 
-        <WalletCard>
+        <Card>
           <h2>Quick Actions</h2>
-          <Button>Buy Data</Button>
-          <Button>Buy Airtime</Button>
-          <Button>Electricity</Button>
-          <Button>Cable TV</Button>
-        </WalletCard>
+          <Button onClick={() => buyService("DATA", 490)}>📡 Buy Data</Button>
+          <Button onClick={() => buyService("AIRTIME", 500)}>📞 Buy Airtime</Button>
+          <Button onClick={() => buyService("CABLE", 1200)}>📺 Cable TV</Button>
+          <Button onClick={() => buyService("ELECTRICITY", 2000)}>⚡ Electricity</Button>
+        </Card>
 
-        <WalletCard>
+        <Card>
           <h2>Transaction History</h2>
-          <ul>
-            <li>📦 DATA - ₦500 - 10 Jan 2026</li>
-            <li>💡 ELECTRICITY - ₦2,000 - 9 Jan 2026</li>
-          </ul>
-        </WalletCard>
+          {transactions.length === 0 ? (
+            <p>No transactions yet</p>
+          ) : (
+            <ul>
+              {transactions.map((t, i) => (
+                <li key={i}>
+                  {t.date} — <b>{t.service}</b> — ₦{t.amount}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
 
-        <FAB onClick={handleTopUp} />
+        {/* Floating Action Button */}
+        <FAB onClick={() => setModal("topup")} />
 
-        <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-          <h2>Top Up Wallet</h2>
-          <p>Choose your amount and payment method.</p>
-          <Button onClick={() => setModalOpen(false)}>Close</Button>
-        </Modal>
+        {/* Notifications */}
+        <div style={{ position: "fixed", top: 10, right: 10, zIndex: 1000 }}>
+          {notifications.map((n) => (
+            <div
+              key={n.id}
+              style={{
+                background: "#333",
+                color: "#fff",
+                padding: "10px 20px",
+                marginBottom: "10px",
+                borderRadius: "8px",
+              }}
+            >
+              {n.msg}
+            </div>
+          ))}
+        </div>
+
+        {/* Modals */}
+        {modal && (
+          <Modal open={modal !== null} onClose={() => setModal(null)}>
+            {modal === "topup" && (
+              <>
+                <h2>Top Up Wallet</h2>
+                <p>Select amount to fund</p>
+                <Button onClick={() => { fundWallet(1000); setModal(null); }}>₦1000</Button>
+                <Button onClick={() => { fundWallet(2000); setModal(null); }}>₦2000</Button>
+                <Button onClick={() => setModal(null)}>Close</Button>
+              </>
+            )}
+          </Modal>
+        )}
       </Content>
     </Container>
   );
