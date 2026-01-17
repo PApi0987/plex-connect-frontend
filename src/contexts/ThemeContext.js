@@ -8,7 +8,7 @@ const lightTheme = {
   primary: "#F5F5F5",
   accent: "#003366",
   text: "#333333",
-  buttonText: "#FFFFFF",
+  buttonText: "#FFFFFF"
 };
 
 const darkTheme = {
@@ -16,7 +16,7 @@ const darkTheme = {
   primary: "#003366",
   accent: "#555555",
   text: "#FFFFFF",
-  buttonText: "#FFFFFF",
+  buttonText: "#FFFFFF"
 };
 
 export const ThemeProviderWrapper = ({ children }) => {
