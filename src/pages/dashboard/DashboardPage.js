@@ -1,156 +1,102 @@
-import React, { useState } from "react";
+// src/pages/dashboard/DashboardPage.js
+import React from "react";
 import styled from "styled-components";
-import { useAuth } from "../contexts/AuthContext";
-import { useTheme } from "../contexts/ThemeContext";
 
-import Sidebar from "../components/Sidebar";
-import FAB from "../components/FAB";
-import Modal from "../components/Modal";
-import SettingsMenu from "../components/SettingsMenu";
-
-const Container = styled.div`
+// Styled components
+const DashboardWrapper = styled.div`
   display: flex;
-  min-height: 100vh;
-  background: ${({ theme }) => theme.background};
-  color: ${({ theme }) => theme.text};
-`;
-
-const Content = styled.div`
-  flex: 1;
+  flex-direction: column;
+  gap: 25px;
   padding: 20px;
 `;
 
 const Card = styled.div`
   background: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.text};
   padding: 20px;
   border-radius: 12px;
-  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 `;
 
-const Button = styled.button`
-  background: ${({ theme }) => theme.accent};
-  color: ${({ theme }) => theme.buttonText};
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: 10px;
-  border: none;
+const WalletBalance = styled.div`
+  font-size: 2rem;
   font-weight: bold;
+  margin-bottom: 10px;
 `;
 
-export default function DashboardPage() {
-  const { user, logout } = useAuth();
-  const { toggleTheme } = useTheme();
+const QuickActions = styled.div`
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
 
-  const [wallet, setWallet] = useState(5000);
-  const [transactions, setTransactions] = useState([]);
-  const [notifications, setNotifications] = useState([]);
-  const [modal, setModal] = useState(null); // "topup" | "settings"
-
-  // Notification helper
-  const addNotification = (msg) => {
-    const id = Date.now();
-    setNotifications((prev) => [...prev, { id, msg }]);
-    setTimeout(() => setNotifications((prev) => prev.filter((n) => n.id !== id)), 4000);
-  };
-
-  // Wallet top-up
-  const fundWallet = (amount = 2000) => {
-    setWallet((prev) => prev + amount);
-    addNotification(`Wallet funded: ₦${amount}`);
-  };
-
-  // Buy service
-  const buyService = (service, amount) => {
-    if (wallet < amount) {
-      addNotification("❌ Insufficient wallet balance");
-      return;
+  button {
+    flex: 1 1 120px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: ${({ theme }) => theme.accent};
+    color: ${({ theme }) => theme.buttonText};
+    transition: 0.2s all;
+    &:hover {
+      opacity: 0.9;
     }
-    setWallet((prev) => prev - amount);
-    setTransactions((prev) => [
-      { service, amount, date: new Date().toLocaleString() },
-      ...prev,
-    ]);
-    addNotification(`Purchased ${service}: ₦${amount}`);
-  };
+  }
+`;
 
+const TransactionsList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+
+  li {
+    padding: 10px 0;
+    border-bottom: 1px solid ${({ theme }) => theme.border};
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+  }
+`;
+
+export default function DashboardPage({ wallet, transactions, fundWallet, buyService }) {
   return (
-    <Container>
-      <Sidebar />
+    <DashboardWrapper>
+      {/* Wallet Card */}
+      <Card>
+        <h2>Wallet Balance</h2>
+        <WalletBalance>₦{wallet}</WalletBalance>
+        <button onClick={() => fundWallet()}>💳 Fund Wallet ₦2000</button>
+      </Card>
 
-      <Content>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1>Welcome, {user.name}</h1>
-          <SettingsMenu logout={logout} />
-        </div>
+      {/* Quick Actions */}
+      <Card>
+        <h2>Quick Actions</h2>
+        <QuickActions>
+          <button onClick={() => buyService("DATA", 490)}>📡 Buy Data</button>
+          <button onClick={() => buyService("AIRTIME", 500)}>📞 Buy Airtime</button>
+          <button onClick={() => buyService("CABLE", 1200)}>📺 Cable TV</button>
+          <button onClick={() => buyService("ELECTRICITY", 2000)}>⚡ Electricity</button>
+        </QuickActions>
+      </Card>
 
-        <Button onClick={toggleTheme}>Toggle Theme</Button>
-
-        <Card>
-          <h2>Wallet Balance</h2>
-          <p>₦{wallet}</p>
-          <Button onClick={() => fundWallet()}>💳 Fund Wallet ₦2000</Button>
-        </Card>
-
-        <Card>
-          <h2>Quick Actions</h2>
-          <Button onClick={() => buyService("DATA", 490)}>📡 Buy Data</Button>
-          <Button onClick={() => buyService("AIRTIME", 500)}>📞 Buy Airtime</Button>
-          <Button onClick={() => buyService("CABLE", 1200)}>📺 Cable TV</Button>
-          <Button onClick={() => buyService("ELECTRICITY", 2000)}>⚡ Electricity</Button>
-        </Card>
-
-        <Card>
-          <h2>Transaction History</h2>
-          {transactions.length === 0 ? (
-            <p>No transactions yet</p>
-          ) : (
-            <ul>
-              {transactions.map((t, i) => (
-                <li key={i}>
-                  {t.date} — <b>{t.service}</b> — ₦{t.amount}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Floating Action Button */}
-        <FAB onClick={() => setModal("topup")} />
-
-        {/* Notifications */}
-        <div style={{ position: "fixed", top: 10, right: 10, zIndex: 1000 }}>
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              style={{
-                background: "#333",
-                color: "#fff",
-                padding: "10px 20px",
-                marginBottom: "10px",
-                borderRadius: "8px",
-              }}
-            >
-              {n.msg}
-            </div>
-          ))}
-        </div>
-
-        {/* Modals */}
-        {modal && (
-          <Modal open={modal !== null} onClose={() => setModal(null)}>
-            {modal === "topup" && (
-              <>
-                <h2>Top Up Wallet</h2>
-                <p>Select amount to fund</p>
-                <Button onClick={() => { fundWallet(1000); setModal(null); }}>₦1000</Button>
-                <Button onClick={() => { fundWallet(2000); setModal(null); }}>₦2000</Button>
-                <Button onClick={() => setModal(null)}>Close</Button>
-              </>
-            )}
-          </Modal>
+      {/* Transaction History */}
+      <Card>
+        <h2>Transaction History</h2>
+        {transactions.length === 0 ? (
+          <p>No transactions yet</p>
+        ) : (
+          <TransactionsList>
+            {transactions.map((t, index) => (
+              <li key={index}>
+                <span>{t.date}</span>
+                <span><b>{t.service}</b> — ₦{t.amount}</span>
+              </li>
+            ))}
+          </TransactionsList>
         )}
-      </Content>
-    </Container>
+      </Card>
+    </DashboardWrapper>
   );
 }
