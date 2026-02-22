@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./styles.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProviderWrapper, useTheme } from "./contexts/ThemeContext";
@@ -13,12 +13,14 @@ import DashboardPage from "./pages/dashboard/DashboardPage";
 import LoginPage from "./pages/auth/LoginPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 
+import { NotificationsWrapper } from "./components/Notification";
+
 function AppContent() {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
 
   // ==========================
-  // STATE MANAGEMENT
+  // STATE
   // ==========================
   const [wallet, setWallet] = useState(0);
   const [transactions, setTransactions] = useState([]);
@@ -29,30 +31,31 @@ function AppContent() {
   // ==========================
   // NOTIFICATIONS
   // ==========================
-  const addNotification = (msg) => {
+  const addNotification = (msg, type = "success") => {
     const id = Date.now();
-    setNotifications(prev => [...prev, { id, msg }]);
-    setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 4000);
+    setNotifications((prev) => [...prev, { id, msg, type }]);
+  };
+
+  const removeNotification = (id) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   // ==========================
   // WALLET & TRANSACTIONS
   // ==========================
-  const fundWallet = async (amount = 2000) => {
-    if (!user) return addNotification("❌ Please login first");
-    // TODO: Replace with API call
-    setWallet(prev => prev + amount);
-    addNotification(`Wallet funded: ₦${amount}`);
+  const fundWallet = (amount = 2000) => {
+    if (!user) return addNotification("❌ Please login first", "error");
+    setWallet((prev) => prev + amount);
+    addNotification(`💰 Wallet funded: ₦${amount}`);
   };
 
-  const buyService = async (service, amount) => {
-    if (!user) return addNotification("❌ Please login first");
-    if (wallet < amount) return addNotification("❌ Insufficient wallet balance");
+  const buyService = (service, amount) => {
+    if (!user) return addNotification("❌ Please login first", "error");
+    if (wallet < amount) return addNotification("❌ Insufficient wallet balance", "error");
 
-    // TODO: Replace with API call for VTU service
-    setWallet(prev => prev - amount);
     const tx = { service, amount, date: new Date().toLocaleString() };
-    setTransactions(prev => [tx, ...prev]);
+    setWallet((prev) => prev - amount);
+    setTransactions((prev) => [tx, ...prev]);
     addNotification(`✅ Purchased ${service}: ₦${amount}`);
   };
 
@@ -61,10 +64,10 @@ function AppContent() {
   // ==========================
   const handleAuth = (type) => {
     if (type === "login") {
-      if (!authData.email || !authData.password) return addNotification("Fill all fields");
+      if (!authData.email || !authData.password) return addNotification("Fill all fields", "error");
       addNotification("✅ Logged in successfully");
     } else if (type === "signup") {
-      if (!authData.name || !authData.email || !authData.password) return addNotification("Fill all fields");
+      if (!authData.name || !authData.email || !authData.password) return addNotification("Fill all fields", "error");
       addNotification("✅ Account created successfully");
     }
     setModal(null);
@@ -72,7 +75,7 @@ function AppContent() {
   };
 
   // ==========================
-  // RENDER MODALS
+  // RENDER MODAL CONTENT
   // ==========================
   const renderModalContent = () => {
     switch (modal) {
@@ -93,9 +96,7 @@ function AppContent() {
   return (
     <div className={`app ${isDark ? "dark-mode" : "light-mode"}`}>
       {/* Notifications */}
-      <div className="notifications">
-        {notifications.map(n => <div key={n.id} className="notification">{n.msg}</div>)}
-      </div>
+      <NotificationsWrapper notifications={notifications} removeNotification={removeNotification} />
 
       {/* Sidebar */}
       <Sidebar onSettings={() => setModal("settings")} onToggleTheme={toggleTheme} />
@@ -139,4 +140,4 @@ export default function App() {
       </ThemeProviderWrapper>
     </AuthProvider>
   );
-  }
+    }
