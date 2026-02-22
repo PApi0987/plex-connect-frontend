@@ -1,39 +1,67 @@
-import { useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+// src/pages/auth/LoginPage.js
+import React from "react";
+import styled from "styled-components";
 
-export default function LoginPage() {
-  const { login } = useAuth();
-  const [form, setForm] = useState({ name: "", email: "" });
-  const navigate = useNavigate();
+// Styled components
+const AuthForm = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+`;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!form.name || !form.email) return alert("Fill all fields");
-    login({ name: form.name, email: form.email });
-    navigate("/");
-  };
+const Input = styled.input`
+  padding: 10px 12px;
+  border: 1px solid ${({ theme }) => theme.border};
+  border-radius: 6px;
+  font-size: 1rem;
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.accent};
+    box-shadow: 0 0 5px ${({ theme }) => theme.accent};
+  }
+`;
 
+const Button = styled.button`
+  padding: 12px;
+  background: ${({ theme }) => theme.accent};
+  color: ${({ theme }) => theme.buttonText};
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s all;
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+export default function LoginPage({ authData, setAuthData, handleAuth, isSignup }) {
   return (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-      <form onSubmit={handleSubmit}>
-        <h2>Login / Sign Up</h2>
-        <input
+    <AuthForm>
+      {isSignup && (
+        <Input
           type="text"
           placeholder="Full Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          required
+          value={authData.name}
+          onChange={e => setAuthData({...authData, name: e.target.value})}
         />
-        <input
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          required
-        />
-        <button type="submit">Continue</button>
-      </form>
-    </div>
+      )}
+      <Input
+        type="email"
+        placeholder="Email"
+        value={authData.email}
+        onChange={e => setAuthData({...authData, email: e.target.value})}
+      />
+      <Input
+        type="password"
+        placeholder="Password"
+        value={authData.password}
+        onChange={e => setAuthData({...authData, password: e.target.value})}
+      />
+      <Button onClick={() => handleAuth(isSignup ? "signup" : "login")}>
+        {isSignup ? "Sign Up" : "Login"}
+      </Button>
+    </AuthForm>
   );
 }
